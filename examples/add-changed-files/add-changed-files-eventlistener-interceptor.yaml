@@ -15,7 +15,7 @@ spec:
                 secretName: github-secret
                 secretKey: secretToken
             - name: "enterpriseBaseURL"
-              value: https://github.ford.com
+              value: https://github.com
       bindings:
         - ref: add-changed-files-pr-binding
       template:
