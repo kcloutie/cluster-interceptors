@@ -8,14 +8,20 @@ spec:
     - name: add-changed-files-listener
       interceptors:
         - ref:
-            name: "add-changed-files"
+            name: add-changed-files
           params:
             - name: "secretRef"
               value:
                 secretName: github-secret
                 secretKey: secretToken
             - name: "enterpriseBaseURL"
-              value: https://github.com
+              value: https://github.ford.com
+        - ref:
+            name: cel
+          params:
+          - name: filter
+            # value: extensions.changed_files.AllString.matches('^\\/(help|kick)$')
+            value: extensions.changed_files.AllString.matches('^api')
       bindings:
         - ref: add-changed-files-pr-binding
       template:
@@ -41,11 +47,12 @@ metadata:
   name: add-changed-files-pr-binding
 spec:
   params:
-    - name: gitrevision
-      value: $(body.pull_request.head.sha)
     - name: gitrepositoryurl
       value: $(body.repository.clone_url)
-
+    - name: changedfiles
+      value: $(extensions.changed_files.AllString)
+    - name: gitevent
+      value: $(header.X-GitHub-Event)
 ---
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
@@ -53,8 +60,9 @@ metadata:
   name: add-changed-files-template
 spec:
   params:
-    - name: gitrevision
     - name: gitrepositoryurl
+    - name: changedfiles
+    - name: gitevent
   resourcetemplates:
     - apiVersion: tekton.dev/v1beta1
       kind: TaskRun
@@ -63,7 +71,39 @@ spec:
       spec:
         taskSpec:
           steps:
-            - image: ubuntu
+            - name: display
+              image: ubuntu
+              # image: registry.ford.com/kcloutie/pwsh-utility@sha256:b50f08aa77bd0c9a6c9a481b5dc2c16a4dbd58da8509b25ae6444066da5676fd
               script: |
                 #! /bin/bash
-                echo "Revision is : $(tt.params.gitrevision). RepoURL is $(tt.params.gitrepositoryurl)"
+                echo ""
+                echo "Git Event: $(tt.params.gitevent)"
+                echo ""
+                echo "Repository Url: $(tt.params.gitrepositoryurl)"
+                echo ""
+                echo "Changed Files: $(tt.params.changedfiles)"
+                echo ""
+                while IFS=',' read -ra FILENAME; do
+                  for i in "${FILENAME[@]}"; do
+                    echo "$i"
+                  done
+                done <<< "$(tt.params.changedfiles)"
+                #!/bin/env pwsh
+
+                # param (
+                #   $REPOSITORY_URL = "$(tt.params.gitrepositoryurl)",
+                #   $CHANGED_FILES = "$(tt.params.changedfiles)",
+                #   $GIT_EVENT = "$(tt.params.gitevent)"
+                # )
+
+                # Write-Output "GIT_EVENT: $GIT_EVENT"
+                # Write-Output ""
+                # Write-Output "REPOSITORY_URL: $REPOSITORY_URL"
+                # Write-Output ""
+                # Write-Output "CHANGED_FILES (String): $CHANGED_FILES"
+                # Write-Output ""
+
+                # Write-Output "CHANGED_FILES (Array):"
+                # $CHANGED_FILES -split "," | ForEach-Object { 
+                #   Write-Output $_
+                # }
