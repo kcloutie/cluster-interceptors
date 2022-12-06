@@ -52,12 +52,9 @@ func main() {
 	// set up signals so we handle the first shutdown signal gracefully
 	ctx := signals.NewContext()
 	cfg := injection.ParseAndGetRESTConfigOrDie()
-	fmt.Printf("Timeout: %v", cfg.Timeout.String())
-	// ctx, startInformer := injection.EnableInjectionOrDie(ctx, cfg)
 	ctx, _ = injection.EnableInjectionOrDie(ctx, cfg)
 
 	logger := logging.FromContext(ctx)
-	logger.Infof("Timeout: %v", cfg.Timeout.String())
 	s := server.Server{
 		Logger: logger,
 	}

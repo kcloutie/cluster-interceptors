@@ -53,7 +53,6 @@ func NewInterceptor(sg interceptors.SecretGetter) *Interceptor {
 	}
 }
 
-// Process(ctx context.Context, r *           InterceptorRequest) *           InterceptorResponse
 func (w Interceptor) Process(ctx context.Context, r *triggersv1.InterceptorRequest) *triggersv1.InterceptorResponse {
 	headers := interceptors.Canonical(r.Header)
 	if v := headers.Get("Content-Type"); v == "application/x-www-form-urlencoded" {

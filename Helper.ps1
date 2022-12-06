@@ -71,12 +71,3 @@ kubectl get events --sort-by='.metadata.creationTimestamp' -n tekton-pipelines
 
 kubectl logs deploy/tekton-triggers-core-interceptors  -n tekton-pipelines
 kubectl logs deploy/tekton-pipelines-webhook  -n tekton-pipelines
-
-
-for POD in $(kubectl get taskruns -o=jsonpath='{.items[*].status.podName}' | grep add-changed-files-)
-do
-  echo "=========================================================================================="
-  echo $POD
-  echo "=========================================================================================="
-  kubectl logs $POD
-done
