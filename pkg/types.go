@@ -10,15 +10,11 @@ type payloadDetails struct {
 }
 
 type changedFiles struct {
-	AllString string
-	All       []string
-	Added     []string
-	Removed   []string
-	Modified  []string
+	Files    string
+	FileList []string
 }
 
 // GitHubInterceptor provides a webhook to add changed files to a pull request event
 type GitHubAddChangeInterceptor struct {
-	SecretRef         *triggersv1.SecretRef `json:"secretRef,omitempty"`
-	EnterpriseBaseURL string                `json:"enterpriseBaseURL,omitempty"`
+	SecretRef *triggersv1.SecretRef `json:"secretRef,omitempty"`
 }

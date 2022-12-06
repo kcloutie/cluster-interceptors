@@ -77,6 +77,8 @@ func (w Interceptor) Process(ctx context.Context, r *triggersv1.InterceptorReque
 		return interceptors.Failf(codes.FailedPrecondition, "event type %s is not allowed", actualEvent)
 	}
 
+	githubEnterpriseHost := headers.Get("X-GitHub-Enterprise-Host")
+
 	secretToken, err := w.getSecret(ctx, r, p)
 	if err != nil {
 		return interceptors.Failf(codes.FailedPrecondition, "error getting secret: %v", err)
@@ -89,7 +91,7 @@ func (w Interceptor) Process(ctx context.Context, r *triggersv1.InterceptorReque
 
 	var changedFiles changedFiles
 	if actualEvent == "pull_request" {
-		changedFiles, err = getChangedFilesFromPr(ctx, payload, p.EnterpriseBaseURL, secretToken)
+		changedFiles, err = getChangedFilesFromPr(ctx, payload, githubEnterpriseHost, secretToken)
 		if err != nil {
 			return interceptors.Failf(codes.FailedPrecondition, "error getting changed files: %v", err)
 		}
@@ -153,10 +155,7 @@ func parseBody(body string, eventType string) (payloadDetails, error) {
 	}
 
 	changedFiles := changedFiles{
-		All:      []string{},
-		Added:    []string{},
-		Removed:  []string{},
-		Modified: []string{},
+		FileList: []string{},
 	}
 
 	commitsSection, ok := jsonMap["commits"].([]interface{})
@@ -178,22 +177,27 @@ func parseBody(body string, eventType string) (payloadDetails, error) {
 				return results, fmt.Errorf("payload body missing 'commits.*.removed' field")
 			}
 			for _, fileName := range addedFiles {
-				changedFiles.All = append(changedFiles.All, fmt.Sprintf("%v", fileName))
-				changedFiles.Added = append(changedFiles.Added, fmt.Sprintf("%v", fileName))
+				fileNameStr := fmt.Sprintf("%v", fileName)
+				if !contains(changedFiles.FileList, fileNameStr) {
+					changedFiles.FileList = append(changedFiles.FileList, fmt.Sprintf("%v", fileNameStr))
+				}
 			}
 
 			for _, fileName := range modifiedFiles {
-				changedFiles.All = append(changedFiles.All, fmt.Sprintf("%v", fileName))
-				changedFiles.Modified = append(changedFiles.Modified, fmt.Sprintf("%v", fileName))
+				fileNameStr := fmt.Sprintf("%v", fileName)
+				if !contains(changedFiles.FileList, fileNameStr) {
+					changedFiles.FileList = append(changedFiles.FileList, fmt.Sprintf("%v", fileName))
+				}
 			}
 
 			for _, fileName := range removedFiles {
-				changedFiles.All = append(changedFiles.All, fmt.Sprintf("%v", fileName))
-				changedFiles.Removed = append(changedFiles.Removed, fmt.Sprintf("%v", fileName))
+				fileNameStr := fmt.Sprintf("%v", fileName)
+				if !contains(changedFiles.FileList, fileNameStr) {
+					changedFiles.FileList = append(changedFiles.FileList, fmt.Sprintf("%v", fileName))
+				}
 			}
 		}
-
-		changedFiles.AllString = strings.Join(changedFiles.All, ",")
+		changedFiles.Files = strings.Join(changedFiles.FileList, ",")
 	}
 
 	results = payloadDetails{
@@ -205,15 +209,23 @@ func parseBody(body string, eventType string) (payloadDetails, error) {
 	return results, nil
 }
 
-func getChangedFilesFromPr(ctx context.Context, payload payloadDetails, enterpriseBaseURL string, token string) (changedFiles, error) {
+// contains checks if a string is present in a slice
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getChangedFilesFromPr(ctx context.Context, payload payloadDetails, githubEnterpriseHost string, token string) (changedFiles, error) {
 	var httpClient *http.Client
 	var client *gh.Client
 	var err error
 	changedFiles := changedFiles{
-		All:      []string{},
-		Added:    []string{},
-		Removed:  []string{},
-		Modified: []string{},
+		FileList: []string{},
 	}
 	if token != "" {
 		tokenSource := oauth2.StaticTokenSource(
@@ -224,7 +236,8 @@ func getChangedFilesFromPr(ctx context.Context, payload payloadDetails, enterpri
 		httpClient = nil
 	}
 
-	if enterpriseBaseURL != "" {
+	if githubEnterpriseHost != "" {
+		enterpriseBaseURL := fmt.Sprintf("https://%s", githubEnterpriseHost)
 		client, err = gh.NewEnterpriseClient(enterpriseBaseURL, enterpriseBaseURL, httpClient)
 		if err != nil {
 			return changedFiles, err
@@ -242,18 +255,9 @@ func getChangedFilesFromPr(ctx context.Context, payload payloadDetails, enterpri
 			return changedFiles, err
 		}
 		for _, file := range files {
-			changedFiles.All = append(changedFiles.All, *file.Filename)
-
-			if *file.Status == "added" {
-				changedFiles.Added = append(changedFiles.Added, *file.Filename)
+			if !contains(changedFiles.FileList, *file.Filename) {
+				changedFiles.FileList = append(changedFiles.FileList, *file.Filename)
 			}
-			if *file.Status == "modified" {
-				changedFiles.Modified = append(changedFiles.Modified, *file.Filename)
-			}
-			if *file.Status == "removed" {
-				changedFiles.Removed = append(changedFiles.Removed, *file.Filename)
-			}
-
 		}
 
 		// allCommitFiles = append(allCommitFiles, files...)
@@ -263,7 +267,7 @@ func getChangedFilesFromPr(ctx context.Context, payload payloadDetails, enterpri
 		opt.Page = resp.NextPage
 	}
 
-	changedFiles.AllString = strings.Join(changedFiles.All, ",")
+	changedFiles.Files = strings.Join(changedFiles.FileList, ",")
 
 	return changedFiles, nil
 }

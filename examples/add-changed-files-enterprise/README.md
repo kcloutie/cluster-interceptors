@@ -1,5 +1,7 @@
 ## GitHub Add Changed Files EventListener
 
+> NOTE: This is for internal testing against github enterprise, please use the `add-changed-files` example instead.
+
 Creates an EventListener that listens for push and pull_request GitHub webhook events. It will add the files that were changed to the extension section of the payload
 
 ### Try it out locally:
@@ -23,6 +25,7 @@ Creates an EventListener that listens for push and pull_request GitHub webhook e
 
    ```bash
     curl -v \
+    -H 'X-GitHub-Enterprise-Host: github.ford.com' \
     -H 'X-GitHub-Event: pull_request' \
     -H 'Content-Type: application/json' \
     -d "@./pr-payload/payload.json" \
@@ -35,6 +38,7 @@ Creates an EventListener that listens for push and pull_request GitHub webhook e
 
    ```bash
     curl -v \
+    -H 'X-GitHub-Enterprise-Host: github.ford.com' \
     -H 'X-GitHub-Event: push' \
     -H 'Content-Type: application/json' \
     -d "@./push-payload/payload.json" \

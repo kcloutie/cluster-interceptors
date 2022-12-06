@@ -1,0 +1,35 @@
+{
+  "ref": "refs/heads/main",
+  "repository": {
+    "name": "mock-repo",
+    "full_name": "kcloutie/mock-repo",
+    "clone_url": "https://github.com/kcloutie/mock-repo.git"
+  },
+  "commits": [
+    {
+      "added": [
+        "terraform/envs/dev/main.tf",
+        "terraform/envs/prod/main.tf",
+        "terraform/envs/qa/main.tf"
+      ],
+      "removed": [],
+      "modified": []
+    },
+    {
+      "added": [],
+      "removed": [],
+      "modified": [
+        "terraform/envs/dev/main.tf"
+      ]
+    },
+    {
+      "added": [
+        "terraform/envs/dev/main.tf",
+        "terraform/envs/prod/main.tf",
+        "terraform/envs/qa/main.tf"
+      ],
+      "removed": [],
+      "modified": []
+    }
+  ]
+}

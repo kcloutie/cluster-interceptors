@@ -1,0 +1,15 @@
+{
+  "action": "opened",
+  "number": 1,
+  "pull_request": {
+    "number": 1,
+    "head": {
+      "sha": "8faa85d6ed4d099b973a59bb5738cb98c478fb76"
+    }
+  },
+  "repository": {
+    "name": "mock-repo",
+    "full_name": "kcloutie/mock-repo",
+    "clone_url": "https://github.com/kcloutie/mock-repo.git"
+  }
+}

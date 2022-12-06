@@ -9,6 +9,11 @@ spec:
       interceptors:
         - ref:
             name: add-changed-files
+          params:
+            - name: "secretRef"
+              value:
+                secretName: github-secret
+                secretKey: secretToken
         - ref:
             name: cel
           params:

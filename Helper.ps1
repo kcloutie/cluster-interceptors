@@ -13,7 +13,8 @@ kubectl logs $PodName
 kubectl port-forward service/el-add-changed-files-listener 8080
 
 Push-Location "./examples/add-changed-files"
-kubectl apply -f ./examples/add-changed-files/add-changed-files-eventlistener-interceptor.yaml
+kubectl apply -f ./add-changed-files-eventlistener-interceptor.yaml
+# kubectl apply -f ./examples/add-changed-files-pr/secret.yaml
 kubectl apply -f ../rbac.yaml
 
 
@@ -23,12 +24,12 @@ kubectl get events --sort-by='.metadata.creationTimestamp'
 
 
 $Headers = @{
-  # "X-GitHub-Event" = "pull_request"
-  "X-GitHub-Event" = "push"
-  "X-Hub-Signature" = "sha1=33035a3a8b7b395139881c2654b59cd1e50ab770"
+  "X-GitHub-Event" = "pull_request"
+  # "X-GitHub-Event" = "push"
+  "X-GitHub-Enterprise-Host" = "github.ford.com"
 }
-# $Body = '{"action": "opened","number": 1,"pull_request": {"head": {"sha": "28911bbb5a3e2ea034daf1f6be0a822d50e31e73"}},"repository": {"full_name": "IaC/tekton-helper-operator","clone_url": "https://github.com/IaC/tekton-helper-operator.git"}}'
-$Body = '{"repository": {"full_name": "IaC/tekton-helper-operator","clone_url": "https://github.ford.com/IaC/tekton-helper-operator.git"},"commits": [{"added": [],"removed": [],"modified": ["api/v1beta1/tektonhelperconfig_types.go","config/crd/bases/tekton-helper.ford.com_tektonhelperconfigs.yaml","config/samples/tektonhelperconfig-oomkillpipeline.yaml","config/samples/tektonhelperconfig-timeout.yaml","controllers/tektonhelperconfig_controller.go","examples/oom-pipeline.yaml","pkg/github/github.go"]}]}'
+$Body = '{"action": "opened","number": 1,"pull_request": {"head": {"sha": "28911bbb5a3e2ea034daf1f6be0a822d50e31e73"}},"repository": {"full_name": "IaC/tekton-helper-operator","clone_url": "https://github.com/IaC/tekton-helper-operator.git"}}'
+# $Body = '{"repository": {"full_name": "IaC/tekton-helper-operator","clone_url": "https://github.ford.com/IaC/tekton-helper-operator.git"},"commits": [{"added": [],"removed": [],"modified": ["api/v1beta1/tektonhelperconfig_types.go","config/crd/bases/tekton-helper.ford.com_tektonhelperconfigs.yaml","config/samples/tektonhelperconfig-oomkillpipeline.yaml","config/samples/tektonhelperconfig-timeout.yaml","controllers/tektonhelperconfig_controller.go","examples/oom-pipeline.yaml","pkg/github/github.go"]}]}'
 
 Invoke-RestMethod -Uri "http://localhost:8080" -Headers $Headers -Body $Body -ContentType "application/json"
 
@@ -70,3 +71,12 @@ kubectl get events --sort-by='.metadata.creationTimestamp' -n tekton-pipelines
 
 kubectl logs deploy/tekton-triggers-core-interceptors  -n tekton-pipelines
 kubectl logs deploy/tekton-pipelines-webhook  -n tekton-pipelines
+
+
+for POD in $(kubectl get taskruns -o=jsonpath='{.items[*].status.podName}' | grep add-changed-files-)
+do
+  echo "=========================================================================================="
+  echo $POD
+  echo "=========================================================================================="
+  kubectl logs $POD
+done
