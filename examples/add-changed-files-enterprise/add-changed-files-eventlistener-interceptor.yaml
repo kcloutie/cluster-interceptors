@@ -88,22 +88,3 @@ spec:
                     echo "$i"
                   done
                 done <<< "$(tt.params.changedfiles)"
-                #!/bin/env pwsh
-
-                # param (
-                #   $REPOSITORY_URL = "$(tt.params.gitrepositoryurl)",
-                #   $CHANGED_FILES = "$(tt.params.changedfiles)",
-                #   $GIT_EVENT = "$(tt.params.gitevent)"
-                # )
-
-                # Write-Output "GIT_EVENT: $GIT_EVENT"
-                # Write-Output ""
-                # Write-Output "REPOSITORY_URL: $REPOSITORY_URL"
-                # Write-Output ""
-                # Write-Output "CHANGED_FILES (String): $CHANGED_FILES"
-                # Write-Output ""
-
-                # Write-Output "CHANGED_FILES (Array):"
-                # $CHANGED_FILES -split "," | ForEach-Object { 
-                #   Write-Output $_
-                # }
