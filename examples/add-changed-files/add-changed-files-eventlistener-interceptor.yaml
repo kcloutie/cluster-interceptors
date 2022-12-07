@@ -9,11 +9,14 @@ spec:
       interceptors:
         - ref:
             name: add-changed-files
-        - ref:
-            name: cel
-          params:
-          - name: filter
-            value: extensions.changed_files.Files.matches('terraform/envs/')
+      # The cel interceptor below shows how the changed files injected 
+      # into the payload by add-changed-files interceptor above could 
+      # be used to determine whether or not the pipeline should be executed
+        # - ref:
+        #     name: cel
+        #   params:
+        #   - name: filter
+        #     value: extensions.changed_files.Files.matches('terraform/envs/')
       bindings:
         - ref: add-changed-files-pr-binding
       template:
